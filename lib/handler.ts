@@ -2,6 +2,8 @@ import {
   ImageConfig,
   imageConfigDefault,
 } from 'next/dist/next-server/server/image-config';
+import path from 'path';
+import querystring from 'querystring';
 import { parse as parseUrl } from 'url';
 import {
   APIGatewayProxyEventV2,
@@ -73,10 +75,17 @@ export async function handler(
 ): Promise<APIGatewayProxyStructuredResultV2> {
   const s3Config = generateS3Config(sourceBucket);
 
+  const query = parseUrl(`/?${event.rawQueryString}`, true).query
+  const urlInQuery = query.url
+  if (typeof urlInQuery !== 'string') throw new Error('urlInQuery must be string')
+  const modifiedRawQueryString = /^https?:\/\//.test(urlInQuery)
+    ? event.rawQueryString
+    : querystring.stringify({ ...query, url: path.join(event.rawPath,urlInQuery)})
+
   const reqMock: any = {
     headers: normalizeHeaders(event.headers),
     method: event.requestContext.http.method,
-    url: `/?${event.rawQueryString}`,
+    url: `/?${modifiedRawQueryString}`
   };
 
   const resBuffers: Buffer[] = [];
@@ -99,6 +108,7 @@ export async function handler(
   resMock._implicitHeader = () => {};
 
   const parsedUrl = parseUrl(reqMock.url, true);
+
   const result = await imageOptimizer(
     imageConfig,
     reqMock,

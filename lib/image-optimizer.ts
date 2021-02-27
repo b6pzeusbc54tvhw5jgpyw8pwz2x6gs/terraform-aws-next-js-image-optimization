@@ -47,10 +47,7 @@ async function imageOptimizer(
     ) => {
       if (s3Config) {
         // S3 expects keys without leading `/`
-        const trimmedKey = url.href.startsWith('/')
-          ? url.href.substring(1)
-          : url.href;
-
+        const trimmedKey = url.href.replace(/^\//,'')
         const object = await s3Config.s3
           .getObject({
             Key: trimmedKey,

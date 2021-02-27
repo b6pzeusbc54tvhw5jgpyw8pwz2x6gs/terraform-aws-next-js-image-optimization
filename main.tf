@@ -37,7 +37,8 @@ module "image_optimizer" {
   }
 
   create_package         = false
-  local_existing_package = module.lambda_content.abs_path
+  # local_existing_package =  module.lambda_content.abs_path
+  local_existing_package =  var.next_image_package_abs_path
 
   allowed_triggers = {
     AllowExecutionFromAPIGateway = {
@@ -69,7 +70,7 @@ module "api_gateway" {
   create_api_domain_name = false
 
   integrations = {
-    "GET /_next/{proxy+}" = {
+    "GET /${var.next_image_path_prefix}/{proxy+}" = {
       lambda_arn             = module.image_optimizer.this_lambda_function_arn
       payload_format_version = "2.0"
       timeout_milliseconds   = var.lambda_timeout * 1000

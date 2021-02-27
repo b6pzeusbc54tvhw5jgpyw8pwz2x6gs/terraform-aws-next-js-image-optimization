@@ -13,6 +13,17 @@ variable "next_image_domains" {
   default     = []
 }
 
+variable "next_image_path_prefix" {
+  description = "Path prefix for images, It can be set in next.config.js"
+  type        = string
+  default     = "_next"
+}
+
+variable "next_image_package_abs_path" {
+  description = "Next image optimization lambda package"
+  type        = string
+}
+
 variable "next_image_device_sizes" {
   description = "Allowed device sizes that should be used for image optimization."
   type        = list(number)
