@@ -1,3 +1,11 @@
+locals {
+  name_suffix = var.name_suffix == null ? random_id.suffix.hex : var.name_suffix
+}
+
+resource "random_id" "suffix" {
+  byte_length = 4
+}
+
 ###############
 # Worker Lambda
 ###############
@@ -11,17 +19,12 @@ module "lambda_content" {
   use_local      = var.debug_use_local_packages
 }
 
-resource "random_id" "function_name" {
-  prefix      = "${var.deployment_name}-"
-  byte_length = 4
-}
-
 module "image_optimizer" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "1.34.0"
 
-  function_name = random_id.function_name.hex
-  description   = var.deployment_name
+  function_name = "${var.name_prefix}-image-optimizer-${local.name_suffix}"
+  description   = "${var.name_prefix} nextjs image optimizer managed by terraform"
   handler       = "handler.handler"
   runtime       = "nodejs14.x"
   memory_size   = var.lambda_memory_size
@@ -37,8 +40,7 @@ module "image_optimizer" {
   }
 
   create_package         = false
-  # local_existing_package =  module.lambda_content.abs_path
-  local_existing_package =  var.next_image_package_abs_path
+  local_existing_package = var.next_image_package_abs_path != null ? var.next_image_package_abs_path : module.lambda_content.abs_path
 
   allowed_triggers = {
     AllowExecutionFromAPIGateway = {
@@ -63,8 +65,8 @@ module "api_gateway" {
   source  = "terraform-aws-modules/apigateway-v2/aws"
   version = "0.8.0"
 
-  name          = var.deployment_name
-  description   = "Managed by Terraform-next.js image optimizer"
+  name          = "${var.name_prefix}-image-optimizer-${local.name_suffix}"
+  description   = "${var.name_prefix} nextjs image optimizer managed by terraform"
   protocol_type = "HTTP"
 
   create_api_domain_name = false
@@ -105,14 +107,9 @@ locals {
   }
 }
 
-resource "random_id" "policy_name" {
-  prefix      = "${var.deployment_name}-"
-  byte_length = 4
-}
-
 resource "aws_cloudfront_origin_request_policy" "this" {
-  name    = "${random_id.policy_name.hex}-request"
-  comment = "Managed by Terraform-next.js image optimizer"
+  name    = "${var.name_prefix}-image-optimizer-request-${local.name_suffix}"
+  comment = "${var.name_prefix} nextjs image optimizer managed by terraform"
 
   cookies_config {
     cookie_behavior = "none"
@@ -134,8 +131,8 @@ resource "aws_cloudfront_origin_request_policy" "this" {
 }
 
 resource "aws_cloudfront_cache_policy" "this" {
-  name    = "${random_id.policy_name.hex}-cache"
-  comment = "Managed by Terraform-next.js image optimizer"
+  name    = "${var.name_prefix}-image-optimizer-cache-${local.name_suffix}"
+  comment = "${var.name_prefix} nextjs image optimizer managed by terraform"
 
   # Default values (Should be provided by origin)
   min_ttl     = 0

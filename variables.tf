@@ -1,6 +1,17 @@
 ##########
 # Settings
 ##########
+variable "name_prefix" {
+  description = "Identifier for the deployment group (Added to resource name)."
+  type        = string
+}
+
+variable "name_suffix" {
+  description = "Identifier for the deployment group (Apppended to resource name)."
+  type        = string
+  default     = null
+}
+
 variable "next_image_version" {
   description = "Next.js version from where you want to use the image optimizer from. Supports semver ranges."
   type        = string
