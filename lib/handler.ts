@@ -71,6 +71,11 @@ const imageConfig: ImageConfig = {
   imageSizes,
 };
 
+const getBuildIdPrefixUrl = (rawPath: string, urlInQuery: string) => {
+  const imagePrefixRemoved = rawPath.replace(/^\/image\//, '/')
+  return path.join(imagePrefixRemoved, urlInQuery)
+}
+
 export async function handler(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyStructuredResultV2> {
@@ -81,7 +86,7 @@ export async function handler(
   if (typeof urlInQuery !== 'string') throw new Error('urlInQuery must be string')
   const modifiedRawQueryString = /^https?:\/\//.test(urlInQuery)
     ? event.rawQueryString
-    : querystring.stringify({ ...query, url: path.join(event.rawPath,urlInQuery)})
+    : querystring.stringify({ ...query, url: getBuildIdPrefixUrl(event.rawPath,urlInQuery)})
 
   const reqMock: any = {
     headers: normalizeHeaders(event.headers),
